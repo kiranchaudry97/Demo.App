@@ -63,6 +63,17 @@ public class OrderController : Controller
         return RedirectToAction("Index");
     }
 
+    public IActionResult Delete(int id)
+    {
+        var order = _context.Orders.FirstOrDefault(o => o.Id == id);
+        if (order != null)
+        {
+            _context.Orders.Remove(order);
+            _context.SaveChanges();
+        }
+        return RedirectToAction("Index");
+    }
+
     [HttpPost]
     public IActionResult Create([FromBody] CreateOrderRequest request)
     {
@@ -96,7 +107,7 @@ public class OrderController : Controller
             books = booksList,
             prices = pricesList,
             orderTotal = orderTotal,
-            orderDate = order.OrderDate.ToString("yyyy-MM-dd")
+            orderDate = order.OrderDate.ToString("yyyy-MM-dd HH:mm:ss")
         });
     }
 }
