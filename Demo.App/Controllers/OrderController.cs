@@ -1,34 +1,102 @@
+using Demo.App.Data;
 using Demo.App.Models;
 using Microsoft.AspNetCore.Mvc;
+using System.Linq;
 
 namespace Demo.App.Controllers;
 
 public class OrderController : Controller
 {
-    private static readonly List<Order> Orders = new();
+    private readonly AppDbContext _context;
 
-    public IActionResult Create(int bookId)
+    public OrderController(AppDbContext context)
     {
-        // Placeholder logic to simulate selecting a customer and book
-        var customer = new Customer { Id = 1, Name = "Jan Jansen", Email = "jan.jansen@example.com" };
-        var book = new Book { Id = bookId, Title = "Sample Book", Author = "Author", Price = 10.0m };
-
-        var order = new Order
-        {
-            Id = Orders.Count + 1,
-            CustomerId = customer.Id,
-            BookIds = new List<int> { book.Id },
-            OrderDate = DateTime.UtcNow
-        };
-
-        Orders.Add(order);
-        return RedirectToAction("Confirm", new { orderId = order.Id });
+        _context = context;
     }
 
-    public IActionResult Confirm(int orderId)
+    public IActionResult Index()
     {
-        var order = Orders.FirstOrDefault(o => o.Id == orderId);
-        if (order == null) return NotFound();
-        return View(order);
+        var orders = _context.Orders.ToList();
+        var customers = _context.Customers.ToList();
+        var books = _context.Books.ToList();
+
+        var transformedOrders = orders.Select(order => new OrderViewModel
+        {
+            Id = order.Id,
+            CustomerName = customers.FirstOrDefault(c => c.Id == order.CustomerId)?.Name,
+            BookTitles = order.BookIds.Select(bookId => books.FirstOrDefault(b => b.Id == bookId)?.Title).ToList(),
+            BookPrices = order.BookIds.Select(bookId => books.FirstOrDefault(b => b.Id == bookId)?.Price ?? 0m).ToList(),
+            OrderDate = order.OrderDate,
+            OrderTotal = order.BookIds.Sum(bookId => books.FirstOrDefault(b => b.Id == bookId)?.Price ?? 0m)
+        }).ToList();
+
+        var model = Tuple.Create(transformedOrders, customers, books);
+        ViewData["CurrencySymbol"] = "€";
+        return View(model);
+    }
+
+    [HttpPost]
+    public IActionResult AddCustomer(Customer customer)
+    {
+        _context.Customers.Add(customer);
+        _context.SaveChanges();
+        return RedirectToAction("Index");
+    }
+
+    [HttpPost]
+    public IActionResult EditCustomer(Customer customer)
+    {
+        _context.Customers.Update(customer);
+        _context.SaveChanges();
+        return RedirectToAction("Index");
+    }
+
+    [HttpPost]
+    public IActionResult DeleteCustomer(int id)
+    {
+        var customer = _context.Customers.FirstOrDefault(c => c.Id == id);
+        if (customer != null)
+        {
+            _context.Customers.Remove(customer);
+            _context.SaveChanges();
+        }
+        return RedirectToAction("Index");
+    }
+
+    [HttpPost]
+    public IActionResult Create([FromBody] CreateOrderRequest request)
+    {
+        if (request == null || request.CustomerId <= 0 || request.BookId <= 0)
+        {
+            return Json(new { error = "Ongeldige invoer." });
+        }
+
+        // Create the order
+        var order = new Order
+        {
+            CustomerId = request.CustomerId,
+            BookIds = new List<int> { request.BookId },
+            OrderDate = DateTime.Now
+        };
+        _context.Orders.Add(order);
+        _context.SaveChanges();
+
+        // Fetch customer and book details
+        var customer = _context.Customers.FirstOrDefault(c => c.Id == request.CustomerId);
+        var book = _context.Books.FirstOrDefault(b => b.Id == request.BookId);
+
+        var booksList = new List<string> { book?.Title };
+        var pricesList = new List<decimal> { book?.Price ?? 0m };
+        var orderTotal = pricesList.Sum();
+
+        return Json(new
+        {
+            id = order.Id,
+            customerName = customer?.Name,
+            books = booksList,
+            prices = pricesList,
+            orderTotal = orderTotal,
+            orderDate = order.OrderDate.ToString("yyyy-MM-dd")
+        });
     }
 }
