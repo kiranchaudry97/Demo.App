@@ -1,0 +1,27 @@
+@model List<Demo.App.Models.Book>
+
+<h1>Boekenlijst</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Titel</th>
+            <th>Auteur</th>
+            <th>Prijs</th>
+            <th>Acties</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var book in Model)
+        {
+            <tr>
+                <td>@book.Title</td>
+                <td>@book.Author</td>
+                <td>@ViewData["CurrencySymbol"] @book.Price.ToString("N2")</td>
+                <td>
+                    <a asp-controller="Order" asp-action="Create" asp-route-bookId="@book.Id" class="btn btn-success">Bestel</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
