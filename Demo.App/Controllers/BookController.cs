@@ -1,6 +1,7 @@
-using Demo.App.Models;
+using Demo.SharedModels.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Globalization;
+using System.Linq;
 
 namespace Demo.App.Controllers;
 
@@ -20,9 +21,16 @@ public class BookController : Controller
         {
             return RedirectToAction("Index", "Customer");
         }
-
         ViewBag.SelectedCustomer = TempData["SelectedCustomer"];
         return View(Books);
+    }
+
+    // Simple API endpoint for MAUI or other clients to fetch books as JSON
+    [HttpGet]
+    [Route("api/books")]
+    public JsonResult GetBooks()
+    {
+        return Json(Books);
     }
 
     public IActionResult Details(int id)

@@ -1,4 +1,4 @@
-using Demo.App.Models;
+using Demo.SharedModels.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace Demo.App.Data;

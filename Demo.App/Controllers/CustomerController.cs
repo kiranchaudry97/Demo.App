@@ -1,5 +1,5 @@
 using Demo.App.Data;
-using Demo.App.Models;
+using Demo.SharedModels.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Demo.App.Controllers;
