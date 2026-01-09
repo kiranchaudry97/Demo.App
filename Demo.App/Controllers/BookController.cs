@@ -16,6 +16,12 @@ public class BookController : Controller
     public IActionResult Index()
     {
         ViewData["CurrencySymbol"] = CultureInfo.CurrentCulture.NumberFormat.CurrencySymbol;
+        if (TempData["SelectedCustomer"] == null)
+        {
+            return RedirectToAction("Index", "Customer");
+        }
+
+        ViewBag.SelectedCustomer = TempData["SelectedCustomer"];
         return View(Books);
     }
 
@@ -25,5 +31,18 @@ public class BookController : Controller
         if (book == null) return NotFound();
         ViewData["CurrencySymbol"] = CultureInfo.CurrentCulture.NumberFormat.CurrencySymbol;
         return View(book);
+    }
+
+    public IActionResult Order(int bookId)
+    {
+        if (TempData["SelectedCustomer"] == null)
+        {
+            return RedirectToAction("Index", "Customer");
+        }
+
+        var customerId = (int)TempData["SelectedCustomer"];
+        TempData["SelectedCustomer"] = customerId; // Preserve TempData
+
+        return RedirectToAction("Create", "Order", new { customerId, bookId });
     }
 }
