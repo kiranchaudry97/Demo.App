@@ -20,14 +20,25 @@ public class OrderController : Controller
         var customers = _context.Customers.ToList();
         var books = _context.Books.ToList();
 
-        var transformedOrders = orders.Select(order => new OrderViewModel
+        var transformedOrders = orders.Select(order =>
         {
-            Id = order.Id,
-            CustomerName = customers.FirstOrDefault(c => c.Id == order.CustomerId)?.Name,
-            BookTitles = order.BookIds.Select(bookId => books.FirstOrDefault(b => b.Id == bookId)?.Title).ToList(),
-            BookPrices = order.BookIds.Select(bookId => books.FirstOrDefault(b => b.Id == bookId)?.Price ?? 0m).ToList(),
-            OrderDate = order.OrderDate,
-            OrderTotal = order.BookIds.Sum(bookId => books.FirstOrDefault(b => b.Id == bookId)?.Price ?? 0m)
+            var titles = order.BookIds
+                .Select(bookId => books.FirstOrDefault(b => b.Id == bookId)?.Title ?? string.Empty)
+                .ToList();
+
+            var prices = order.BookIds
+                .Select(bookId => books.FirstOrDefault(b => b.Id == bookId)?.Price ?? 0m)
+                .ToList();
+
+            return new OrderViewModel
+            {
+                Id = order.Id,
+                CustomerName = customers.FirstOrDefault(c => c.Id == order.CustomerId)?.Name ?? string.Empty,
+                BookTitles = titles,
+                BookPrices = prices,
+                OrderDate = order.OrderDate,
+                OrderTotal = prices.Sum()
+            };
         }).ToList();
 
         var model = Tuple.Create(transformedOrders, customers, books);
@@ -96,7 +107,7 @@ public class OrderController : Controller
         var customer = _context.Customers.FirstOrDefault(c => c.Id == request.CustomerId);
         var book = _context.Books.FirstOrDefault(b => b.Id == request.BookId);
 
-        var booksList = new List<string> { book?.Title };
+        var booksList = new List<string> { book?.Title ?? string.Empty };
         var pricesList = new List<decimal> { book?.Price ?? 0m };
         var orderTotal = pricesList.Sum();
 
@@ -109,5 +120,27 @@ public class OrderController : Controller
             orderTotal = orderTotal,
             orderDate = order.OrderDate.ToString("yyyy-MM-dd HH:mm:ss")
         });
+    }
+
+    // API endpoint for MAUI app to fetch orders as JSON
+    [HttpGet]
+    [Route("api/orders")]
+    public JsonResult GetOrders()
+    {
+        var customers = _context.Customers.ToList();
+        var books = _context.Books.ToList();
+
+        var orders = _context.Orders
+            .ToList()
+            .Select(o => new
+            {
+                id = o.Id,
+                customerName = customers.FirstOrDefault(c => c.Id == o.CustomerId)?.Name,
+                books = o.BookIds.Select(bid => books.FirstOrDefault(b => b.Id == bid)?.Title).ToList(),
+                orderDate = o.OrderDate.ToString("yyyy-MM-dd HH:mm:ss")
+            })
+            .ToList();
+
+        return Json(orders);
     }
 }

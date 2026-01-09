@@ -22,6 +22,18 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Exclude MAUI client sample files from the web project build -->
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Prevent SDK from compiling/including MAUI client source placed in the project folder -->
+    <Compile Remove="MauiClient\**\*.cs" />
+    <EmbeddedResource Remove="MauiClient\**\*.xaml" />
+    <None Remove="MauiClient\**\*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="MauiClient\MauiClient.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:MauiClient.Models"
+             x:Class="MauiClient.IndexPage"
+             Title="Beheerpagina">
+  <ScrollView>
+    <VerticalStackLayout Padding="20" Spacing="16">
+      <Label Text="Beheerpagina" FontSize="24" HorizontalOptions="Center" />
+
+      <Label Text="Bestellingen" FontAttributes="Bold" />
+      <CollectionView x:Name="OrdersList" HeightRequest="200">
+        <CollectionView.ItemTemplate>
+          <DataTemplate>
+            <Frame Padding="8" Margin="4">
+              <VerticalStackLayout>
+                <Label Text="{Binding CustomerName}" FontAttributes="Bold" />
+                <Label Text="{Binding OrderDate}" FontSize="12" />
+                <Label Text="{Binding OrderTotal, StringFormat='Totaal: {0:C}'}" />
+              </VerticalStackLayout>
+            </Frame>
+          </DataTemplate>
+        </CollectionView.ItemTemplate>
+      </CollectionView>
+
+      <Label Text="Klanten" FontAttributes="Bold" />
+      <CollectionView x:Name="CustomersList" HeightRequest="200">
+        <CollectionView.ItemTemplate>
+          <DataTemplate>
+            <Grid Padding="8">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
+              <StackLayout Grid.Column="0">
+                <Label Text="{Binding Name}" FontAttributes="Bold" />
+                <Label Text="{Binding Email}" FontSize="12" />
+              </StackLayout>
+              <Button Grid.Column="1" Text="Bewerken" Clicked="OnEditCustomer" CommandParameter="{Binding Id}" />
+            </Grid>
+          </DataTemplate>
+        </CollectionView.ItemTemplate>
+      </CollectionView>
+
+      <Label Text="Boeken" FontAttributes="Bold" />
+      <CollectionView x:Name="BooksList" HeightRequest="150">
+        <CollectionView.ItemTemplate>
+          <DataTemplate>
+            <Grid Padding="8">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
+              <StackLayout Grid.Column="0">
+                <Label Text="{Binding Title}" FontAttributes="Bold" />
+                <Label Text="{Binding Author}" FontSize="12" />
+              </StackLayout>
+              <Label Grid.Column="1" Text="{Binding Price, StringFormat='{0:C}'}" VerticalOptions="Center" />
+            </Grid>
+          </DataTemplate>
+        </CollectionView.ItemTemplate>
+      </CollectionView>
+
+      <Frame Padding="12">
+        <VerticalStackLayout>
+          <Label Text="Klant details" FontAttributes="Bold" />
+          <Entry x:Name="NameEntry" Placeholder="Naam" />
+          <Entry x:Name="EmailEntry" Placeholder="Email" Keyboard="Email" />
+          <HorizontalStackLayout Spacing="12">
+            <Button Text="Opslaan" Clicked="OnSaveCustomer" />
+            <Button Text="Nieuw" Clicked="OnNewCustomer" />
+          </HorizontalStackLayout>
+        </VerticalStackLayout>
+      </Frame>
+    </VerticalStackLayout>
+  </ScrollView>
+</ContentPage>

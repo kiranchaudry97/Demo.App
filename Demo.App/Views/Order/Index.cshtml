@@ -33,7 +33,7 @@
                                 <ul class="mb-0">
                                     @for (int i = 0; i < (order.BookTitles?.Count ?? 0); i++)
                                     {
-                                        var title = order.BookTitles[i];
+                                        var title = order.BookTitles[i] ?? string.Empty;
                                         var price = (order.BookPrices != null && order.BookPrices.Count > i) ? order.BookPrices[i] : 0m;
                                         <li>@title - @ViewData["CurrencySymbol"] @price.ToString("N2")</li>
                                     }
@@ -157,58 +157,31 @@
         event.preventDefault();
 
         const customerId = document.getElementById('customerId').value;
-        const customerName = document.getElementById('customerName').value;
-        const customerEmail = document.getElementById('customerEmail').value;
+        const customerName = document.getElementById('customerName').value?.trim();
+        const customerEmail = document.getElementById('customerEmail').value?.trim();
 
-        if (!customerName || !customerEmail) {
-            alert('Voer een geldige naam en e-mail in.');
-            return;
-        }
+        if (!customerName || !customerEmail) { alert('Voer een geldige naam en e-mail in.'); return; }
 
-        // Ensure Id is a number (0 for new customer)
-        const payload = { Id: customerId ? parseInt(customerId, 10) : 0, Name: customerName, Email: customerEmail };
-        console.log('Sending payload to /Customer/Save:', payload);
+        const payload = {
+            Name: customerName,
+            Email: customerEmail
+        };
+        if (customerId) { payload.Id = parseInt(customerId, 10); }
 
         fetch('/Customer/Save', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
         })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    alert(data.error);
-                    return;
-                }
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) { alert(data.error); return; }
+            const table = document.getElementById('customerTable').querySelector('tbody');
 
-                const table = document.getElementById('customerTable').querySelector('tbody');
-
-                if (payload.Id && payload.Id > 0) {
-                    // Update existing customer
-                    const row = document.getElementById(`customer-${payload.Id}`);
-                    if (row) {
-                        row.innerHTML = `
-                            <td>${data.name}</td>
-                            <td>${data.email}</td>
-                            <td class="text-center">
-                                <button class="btn btn-sm btn-warning" onclick="editCustomer(${data.id}, '${data.name}', '${data.email}')">Bewerken</button>
-                                <button class="btn btn-sm btn-danger" onclick="deleteCustomer(${data.id})">Verwijderen</button>
-                            </td>
-                        `;
-                    }
-                    // Update select dropdown text for edited customer
-                    const select = document.getElementById('selectCustomer');
-                    if (select) {
-                        const opt = select.querySelector(`option[value="${data.id}"]`);
-                        if (opt) opt.text = data.name;
-                    }
-                } else {
-                    // Add new customer
-                    const newRow = document.createElement('tr');
-                    newRow.id = `customer-${data.id}`;
-                    newRow.innerHTML = `
+            if (payload.Id && payload.Id > 0) {
+                const row = document.getElementById(`customer-${payload.Id}`);
+                if (row) {
+                    row.innerHTML = `
                         <td>${data.name}</td>
                         <td>${data.email}</td>
                         <td class="text-center">
@@ -216,22 +189,37 @@
                             <button class="btn btn-sm btn-danger" onclick="deleteCustomer(${data.id})">Verwijderen</button>
                         </td>
                     `;
-                    table.appendChild(newRow);
-
-                    // Add new option to selectCustomer dropdown
-                    const select = document.getElementById('selectCustomer');
-                    if (select) {
-                        const opt = document.createElement('option');
-                        opt.value = data.id;
-                        opt.text = data.name;
-                        select.appendChild(opt);
-                    }
                 }
+                const select = document.getElementById('selectCustomer');
+                if (select) {
+                    const opt = select.querySelector(`option[value="${data.id}"]`);
+                    if (opt) opt.text = data.name;
+                }
+            } else {
+                const newRow = document.createElement('tr');
+                newRow.id = `customer-${data.id}`;
+                newRow.innerHTML = `
+                    <td>${data.name}</td>
+                    <td>${data.email}</td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-warning" onclick="editCustomer(${data.id}, '${data.name}', '${data.email}')">Bewerken</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteCustomer(${data.id})">Verwijderen</button>
+                    </td>
+                `;
+                table.appendChild(newRow);
 
-                // Clear the form
-                addCustomer();
-            })
-            .catch(error => console.error('Error:', error));
+                const select = document.getElementById('selectCustomer');
+                if (select) {
+                    const opt = document.createElement('option');
+                    opt.value = data.id;
+                    opt.text = data.name;
+                    select.appendChild(opt);
+                }
+            }
+
+            addCustomer();
+        })
+        .catch(err => { console.error(err); alert('Netwerkfout'); });
     });
 // Removed duplicate /Customer/Add handler. Using only /Customer/Save handler above.
 

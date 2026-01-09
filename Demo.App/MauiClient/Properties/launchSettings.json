@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "profiles": {
+    "MauiClient": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "API_BASE": "http://10.0.2.2:5500/"
+      }
+    }
+  }
+}
+  

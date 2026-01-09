@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MauiClient.CustomersPage"
+             Title="Klanten">
+  <VerticalStackLayout Padding="20" Spacing="12">
+    <Label Text="Klanten" FontSize="24" HorizontalOptions="Center" />
+
+    <CollectionView x:Name="CustomersList" SelectionMode="Single" HeightRequest="300">
+      <CollectionView.ItemTemplate>
+        <DataTemplate>
+          <Grid Padding="8">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackLayout Grid.Column="0">
+              <Label Text="{Binding Name}" FontAttributes="Bold" />
+              <Label Text="{Binding Email}" FontSize="12" />
+            </StackLayout>
+            <Button Grid.Column="1" Text="Verwijderen" Clicked="OnDeleteClicked" CommandParameter="{Binding Id}" />
+          </Grid>
+        </DataTemplate>
+      </CollectionView.ItemTemplate>
+    </CollectionView>
+
+    <Entry x:Name="NameEntry" Placeholder="Naam" />
+    <Entry x:Name="EmailEntry" Placeholder="Email" Keyboard="Email" />
+    <HorizontalStackLayout Spacing="12">
+      <Button Text="Opslaan" Clicked="OnSaveClicked" />
+      <Button Text="Nieuw" Clicked="OnNewClicked" />
+    </HorizontalStackLayout>
+  </VerticalStackLayout>
+</ContentPage>

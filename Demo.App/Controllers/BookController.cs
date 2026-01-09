@@ -48,9 +48,12 @@ public class BookController : Controller
             return RedirectToAction("Index", "Customer");
         }
 
-        var customerId = (int)TempData["SelectedCustomer"];
-        TempData["SelectedCustomer"] = customerId; // Preserve TempData
+        if (TempData["SelectedCustomer"] is int customerId)
+        {
+            TempData["SelectedCustomer"] = customerId; // Preserve TempData
+            return RedirectToAction("Create", "Order", new { customerId, bookId });
+        }
 
-        return RedirectToAction("Create", "Order", new { customerId, bookId });
+        return RedirectToAction("Index", "Customer");
     }
 }
