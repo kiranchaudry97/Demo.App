@@ -5,6 +5,14 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+// Add API controllers
+builder.Services.AddControllers();
+
+// Add CORS policy for MAUI local development
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy => policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+});
 
 // Configure SQLite
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -42,11 +50,15 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseCors("AllowAll");
+// Validate API key for API endpoints
+app.UseMiddleware<Demo.App.Middleware.ApiKeyMiddleware>();
 app.UseAuthorization();
 
-// Map the default route to the consolidated Index page
+// Map controllers (MVC + API)
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Order}/{action=Index}/{id?}");
+app.MapControllers();
 
 app.Run();

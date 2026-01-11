@@ -1,16 +1,16 @@
 ﻿using Maui.App.Models;
 #nullable enable
 using Microsoft.Extensions.DependencyInjection;
-#nullable enable
 using Microsoft.Maui.Controls;
+using Microsoft.Maui.ApplicationModel;
+using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Linq;
 #if USE_EF
 using Microsoft.EntityFrameworkCore;
-#endif
-#if USE_EF
 using Maui.App.Data;
 #endif
-using System.Linq;
 
 namespace Maui.App;
 
@@ -19,6 +19,7 @@ public partial class MainPage : ContentPage
     private readonly List<Customer> _customers = new();
     private readonly List<Book> _books = new();
     private readonly List<Order> _orders = new();
+    private readonly Services.ApiClient? _api;
     private int _nextCustomerId = 1;
     private int _nextBookId = 1;
     private int _nextOrderId = 1;
@@ -30,6 +31,17 @@ public partial class MainPage : ContentPage
     {
         InitializeComponent();
         // try to resolve AppDbContext from MAUI DI container
+#if !USE_EF
+        // try to resolve ApiClient from DI for REST backend
+        try
+        {
+            _api = Application.Current?.Handler?.MauiContext?.Services?.GetService<Services.ApiClient>();
+        }
+        catch
+        {
+            _api = null;
+        }
+    #endif
 #if USE_EF
         try
         {
@@ -51,7 +63,15 @@ public partial class MainPage : ContentPage
             SeedData();
         }
 #else
-        SeedData();
+        // if ApiClient available, load from backend
+        if (_api != null)
+        {
+            LoadFromApiAsync().GetAwaiter().GetResult();
+        }
+        else
+        {
+            SeedData();
+        }
 #endif
 
         RefreshAllViews();
@@ -106,6 +126,34 @@ public partial class MainPage : ContentPage
         _nextOrderId = (_orders.Count > 0) ? _orders.Max(o => o.Id) + 1 : 1;
     }
 #endif
+
+    private async Task LoadFromApiAsync()
+    {
+        if (_api == null) return;
+        try
+        {
+            var customers = await _api.GetCustomersAsync();
+            var books = await _api.GetBooksAsync();
+            var orders = await _api.GetOrdersAsync();
+
+            _customers.Clear();
+            _books.Clear();
+            _orders.Clear();
+
+            _customers.AddRange(customers);
+            _books.AddRange(books);
+            _orders.AddRange(orders);
+
+            _nextCustomerId = (_customers.Count > 0) ? _customers.Max(c => c.Id) + 1 : 1;
+            _nextBookId = (_books.Count > 0) ? _books.Max(b => b.Id) + 1 : 1;
+            _nextOrderId = (_orders.Count > 0) ? _orders.Max(o => o.Id) + 1 : 1;
+        }
+        catch
+        {
+            // ignore API failures and fallback to seeded data
+            SeedData();
+        }
+    }
 
     private void RefreshAllViews()
     {
@@ -242,7 +290,7 @@ public partial class MainPage : ContentPage
             // also select this customer in the order picker so seller can immediately choose a book
             try
             {
-                OrderCustomerPicker.SelectedItem = $"{selected.Id}: {selected.Name}";
+                OrderCustomerPicker.SelectedItem = _customers.FirstOrDefault(c => c.Id == selected.Id);
                 // refresh book picker state based on newly selected customer
                 OnOrderPickerChanged(null, EventArgs.Empty);
 
@@ -506,23 +554,32 @@ public partial class MainPage : ContentPage
         else
         {
             // Create new order
-            #if USE_EF
-            if (_db != null)
+            if (_api != null)
             {
-                var order = new Order { CustomerId = customer.Id, BookIds = new List<int> { book.Id }, OrderDate = DateTime.Now, Name = customer.Name };
-                _db.Orders.Add(order);
-                await _db.SaveChangesAsync();
-                await LoadFromDatabaseAsync();
+                var newOrder = new Order { CustomerId = customer.Id, BookIds = new List<int> { book.Id }, OrderDate = DateTime.Now };
+                await _api.CreateOrderAsync(newOrder);
+                await LoadFromApiAsync();
             }
             else
             {
+                #if USE_EF
+                if (_db != null)
+                {
+                    var order = new Order { CustomerId = customer.Id, BookIds = new List<int> { book.Id }, OrderDate = DateTime.Now, Name = customer.Name };
+                    _db.Orders.Add(order);
+                    await _db.SaveChangesAsync();
+                    await LoadFromDatabaseAsync();
+                }
+                else
+                {
+                    var order = new Order { Id = _nextOrderId++, CustomerId = customer.Id, BookIds = new List<int> { book.Id }, OrderDate = DateTime.Now };
+                    _orders.Add(order);
+                }
+                #else
                 var order = new Order { Id = _nextOrderId++, CustomerId = customer.Id, BookIds = new List<int> { book.Id }, OrderDate = DateTime.Now };
                 _orders.Add(order);
+                #endif
             }
-            #else
-            var order = new Order { Id = _nextOrderId++, CustomerId = customer.Id, BookIds = new List<int> { book.Id }, OrderDate = DateTime.Now };
-            _orders.Add(order);
-            #endif
         }
 
         RefreshAllViews();
@@ -538,8 +595,8 @@ public partial class MainPage : ContentPage
                 // preselect pickers (select by object)
                 var cust = _customers.FirstOrDefault(c => c.Id == order.CustomerId);
                 var bk = _books.FirstOrDefault(b => order.BookIds.Contains(b.Id));
-                if (cust != null) OrderCustomerPicker.SelectedItem = $"{cust.Id}: {cust.Name}";
-                if (bk != null) OrderBookPicker.SelectedItem = $"{bk.Id}: {bk.Title}";
+                if (cust != null) OrderCustomerPicker.SelectedItem = cust;
+                if (bk != null) OrderBookPicker.SelectedItem = bk;
                 OrderActionButton.Text = "Bijwerken";
                 OrderActionButton.CommandParameter = order.Id;
             }

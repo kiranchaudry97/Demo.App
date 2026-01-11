@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 #if USE_EF
 using Microsoft.EntityFrameworkCore;
 using Maui.App.Data;
@@ -19,6 +20,17 @@ namespace Maui.App
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                 });
+
+            // Configure configuration and register ApiClient via HttpClientFactory with API key handler
+            builder.Configuration.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+
+            builder.Services.AddTransient<Services.ApiKeyHandler>();
+            builder.Services.AddHttpClient<Services.ApiClient>(client =>
+            {
+                var baseUrl = builder.Configuration["Api:BaseUrl"] ?? "https://localhost:7187/";
+                client.BaseAddress = new Uri(baseUrl);
+            })
+            .AddHttpMessageHandler<Services.ApiKeyHandler>();
 
 #if DEBUG
     		builder.Logging.AddDebug();
@@ -61,3 +73,8 @@ namespace Maui.App
         }
     }
 }
+
+// Register ApiClient for REST calls to Demo.App after builder created
+// Registering here requires adding namespace for the service
+// Note: HttpClient registration should be done inside CreateMauiApp before Build();
+
