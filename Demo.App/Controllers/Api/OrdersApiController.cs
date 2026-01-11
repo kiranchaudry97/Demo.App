@@ -9,7 +9,17 @@ namespace Demo.App.Controllers.Api;
 public class OrdersApiController : ControllerBase
 {
     private readonly AppDbContext _db;
-    public OrdersApiController(AppDbContext db) => _db = db;
+    private readonly Demo.App.Services.IRabbitMqPublisher? _publisher;
+    private readonly IConfiguration _config;
+    private readonly ILogger<OrdersApiController> _logger;
+
+    public OrdersApiController(AppDbContext db, IConfiguration config, ILogger<OrdersApiController> logger, Demo.App.Services.IRabbitMqPublisher? publisher = null)
+    {
+        _db = db;
+        _config = config;
+        _logger = logger;
+        _publisher = publisher;
+    }
 
     [HttpGet]
     public IActionResult Get() => Ok(_db.Orders.ToList());
@@ -28,6 +38,41 @@ public class OrdersApiController : ControllerBase
         if (order == null) return BadRequest();
         _db.Orders.Add(order);
         _db.SaveChanges();
+        // Publish to RabbitMQ (best-effort)
+        try
+        {
+            if (_publisher != null)
+            {
+                var items = (order.BookIds?.Select(id => (object)new
+                {
+                    BookId = id,
+                    Title = _db.Books.Find(id)?.Title ?? string.Empty,
+                    Price = _db.Books.Find(id)?.Price ?? 0m,
+                    Quantity = 1
+                }).ToList<object>()) ?? new List<object>();
+
+                var evt = new
+                {
+                    EventId = Guid.NewGuid(),
+                    OrderId = order.Id,
+                    CustomerId = order.CustomerId,
+                    CustomerName = _db.Customers.Find(order.CustomerId)?.Name,
+                    Items = items,
+                    OrderDate = order.OrderDate,
+                    Source = "Demo.App",
+                    CorrelationId = HttpContext.TraceIdentifier,
+                    Version = 1
+                };
+
+                var routing = _config["RabbitMq:RoutingKey"] ?? "orders.created";
+                _publisher.PublishOrderCreated(evt, routing);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to publish OrderCreated event for order {OrderId}", order.Id);
+        }
+
         return CreatedAtAction(nameof(Get), new { id = order.Id }, order);
     }
 

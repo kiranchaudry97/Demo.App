@@ -18,6 +18,11 @@ builder.Services.AddCors(options =>
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Register RabbitMQ publisher
+builder.Services.AddSingleton<Demo.App.Services.IRabbitMqPublisher, Demo.App.Services.RabbitMqPublisher>();
+// Register simple RabbitMQ consumer background service (logs messages)
+builder.Services.AddHostedService<Demo.App.Services.RabbitMqConsumer>();
+
 // Disable configuration-based endpoint overrides
 builder.WebHost.UseSetting("urls", ""); // Clear IConfiguration bindings
 
