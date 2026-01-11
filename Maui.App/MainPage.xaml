@@ -84,22 +84,23 @@
             <StackLayout Orientation="Vertical" Spacing="8">
                         <CollectionView x:Name="OrdersView" HeightRequest="240" Margin="0,4">
                             <CollectionView.Header>
-                                <Grid Padding="6" ColumnSpacing="8">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="70" />
-                                        <ColumnDefinition Width="1*" />
-                                        <ColumnDefinition Width="2*" />
-                                        <ColumnDefinition Width="160" />
-                                        <ColumnDefinition Width="90" />
-                                        <ColumnDefinition Width="110" />
-                                    </Grid.ColumnDefinitions>
-                                    <Label Text="Bestelling ID" FontAttributes="Bold" Grid.Column="0" />
-                                    <Label Text="Klant" FontAttributes="Bold" Grid.Column="1" />
-                                    <Label Text="Boek(en)" FontAttributes="Bold" Grid.Column="2" />
-                                    <Label Text="Datum" FontAttributes="Bold" Grid.Column="3" />
-                                    <Label Text="Totaal" FontAttributes="Bold" Grid.Column="4" HorizontalTextAlignment="End" />
-                                    <Label Text="Acties" FontAttributes="Bold" Grid.Column="5" HorizontalTextAlignment="Center" />
-                                </Grid>
+                            <Grid Padding="6" ColumnSpacing="8">
+                                <!-- use star sizing and smaller numbers for better small-screen layout -->
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="60" />
+                                    <ColumnDefinition Width="1*" />
+                                    <ColumnDefinition Width="2*" />
+                                    <ColumnDefinition Width="120" />
+                                    <ColumnDefinition Width="80" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Label Text="Bestelling ID" FontAttributes="Bold" Grid.Column="0" FontSize="12" LineBreakMode="NoWrap" />
+                                <Label Text="Klant" FontAttributes="Bold" Grid.Column="1" FontSize="12" LineBreakMode="NoWrap" />
+                                <Label Text="Boek(en)" FontAttributes="Bold" Grid.Column="2" FontSize="12" LineBreakMode="NoWrap" />
+                                <Label Text="Datum" FontAttributes="Bold" Grid.Column="3" FontSize="12" LineBreakMode="NoWrap" />
+                                <Label Text="Totaal" FontAttributes="Bold" Grid.Column="4" FontSize="12" HorizontalTextAlignment="End" LineBreakMode="NoWrap" />
+                                <Label Text="Acties" FontAttributes="Bold" Grid.Column="5" FontSize="12" HorizontalTextAlignment="Center" LineBreakMode="NoWrap" />
+                            </Grid>
                             </CollectionView.Header>
                             <CollectionView.ItemTemplate>
                                 <DataTemplate>
@@ -129,24 +130,24 @@
                         </CollectionView>
                     <StackLayout Orientation="Vertical" Spacing="6">
                         <Label Text="Kies eerst een klant, daarna een boek, en klik vervolgens op 'Bestel'" FontAttributes="Italic" FontSize="12" TextColor="Gray" />
-                        <StackLayout Orientation="Horizontal" Spacing="8">
-                            <Picker x:Name="OrderCustomerPicker" Title="Selecteer klant" HorizontalOptions="FillAndExpand" SelectedIndexChanged="OnOrderPickerChanged" />
-                            <Picker x:Name="OrderBookPicker" Title="Selecteer boek" WidthRequest="220" SelectedIndexChanged="OnOrderPickerChanged" IsEnabled="False">
-                                <Picker.Triggers>
-                                    <DataTrigger TargetType="Picker" Binding="{Binding IsEnabled, Source={x:Reference OrderBookPicker}}" Value="False">
-                                        <Setter Property="Opacity" Value="0.5" />
-                                    </DataTrigger>
-                                </Picker.Triggers>
-                            </Picker>
-                            <Button x:Name="OrderActionButton" Text="Bestel" Clicked="OnCreateOrderClicked" IsEnabled="False">
-                                <Button.Triggers>
-                                    <DataTrigger TargetType="Button" Binding="{Binding IsEnabled, Source={x:Reference OrderActionButton}}" Value="False">
-                                        <Setter Property="Opacity" Value="0.5" />
-                                    </DataTrigger>
-                                </Button.Triggers>
-                            </Button>
-                            <Button Text="Annuleer" Clicked="OnCancelOrderEditClicked" />
-                        </StackLayout>
+                        <Label Text="Klant" FontAttributes="Bold" />
+                        <Picker x:Name="OrderCustomerPicker" Title="Selecteer een klant" HorizontalOptions="FillAndExpand" SelectedIndexChanged="OnOrderPickerChanged" ItemDisplayBinding="{Binding Name}" />
+                        <Label Text="Boek" FontAttributes="Bold" />
+                        <Picker x:Name="OrderBookPicker" Title="Selecteer een boek" HorizontalOptions="FillAndExpand" SelectedIndexChanged="OnOrderPickerChanged" IsEnabled="False" ItemDisplayBinding="{Binding Title}">
+                            <Picker.Triggers>
+                                <DataTrigger TargetType="Picker" Binding="{Binding IsEnabled, Source={x:Reference OrderBookPicker}}" Value="False">
+                                    <Setter Property="Opacity" Value="0.5" />
+                                </DataTrigger>
+                            </Picker.Triggers>
+                        </Picker>
+                        <Button x:Name="OrderActionButton" Text="Bestel" Clicked="OnCreateOrderClicked" IsEnabled="False" HorizontalOptions="Start">
+                            <Button.Triggers>
+                                <DataTrigger TargetType="Button" Binding="{Binding IsEnabled, Source={x:Reference OrderActionButton}}" Value="False">
+                                    <Setter Property="Opacity" Value="0.5" />
+                                </DataTrigger>
+                            </Button.Triggers>
+                        </Button>
+                        <Button Text="Annuleer" Clicked="OnCancelOrderEditClicked" BackgroundColor="#5b2bd4" TextColor="White" HorizontalOptions="Start" />
                     </StackLayout>
                     </StackLayout>
                 </VerticalStackLayout>

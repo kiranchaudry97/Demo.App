@@ -124,9 +124,9 @@ public partial class MainPage : ContentPage
 
         OrdersView.ItemsSource = orderViewModels;
 
-        // Use "id: name" strings like Demo.App so picker shows friendly text and selection gives parsable id
-        OrderCustomerPicker.ItemsSource = _customers.Select(c => $"{c.Id}: {c.Name}").ToList();
-        OrderBookPicker.ItemsSource = _books.Select(b => $"{b.Id}: {b.Title}").ToList();
+        // Provide object lists to pickers and use ItemDisplayBinding in XAML to show Name/Title
+        OrderCustomerPicker.ItemsSource = _customers;
+        OrderBookPicker.ItemsSource = _books;
 
         // No filters: nothing to populate
     }
@@ -401,17 +401,15 @@ public partial class MainPage : ContentPage
 
     private void OnOrderPickerChanged(object sender, EventArgs e)
     {
-        var custItem = OrderCustomerPicker.SelectedItem as string;
-        var parsedCust = ParsePickerItem(custItem);
-
+        var selectedCustomer = OrderCustomerPicker.SelectedItem as Customer;
         var bookPicker = this.FindByName<Picker>("OrderBookPicker");
-        if (parsedCust == null)
+        if (selectedCustomer == null)
         {
             // no customer selected -> disable book picker and reset to full list
             if (bookPicker != null)
             {
                 bookPicker.IsEnabled = false;
-                OrderBookPicker.ItemsSource = _books.Select(b => $"{b.Id}: {b.Title}").ToList();
+                OrderBookPicker.ItemsSource = _books;
                 OrderBookPicker.SelectedItem = null;
             }
             OrderActionButton.IsEnabled = false;
@@ -421,46 +419,41 @@ public partial class MainPage : ContentPage
         // customer selected -> enable book picker and filter out books already ordered by this customer
         if (bookPicker != null) bookPicker.IsEnabled = true;
 
-        var customerId = parsedCust.Value.id;
+        var customerId = selectedCustomer.Id;
         var orderedBookIds = _orders.Where(o => o.CustomerId == customerId).SelectMany(o => o.BookIds).Distinct().ToHashSet();
         var availableBooks = _books.Where(b => !orderedBookIds.Contains(b.Id)).ToList();
 
         if (availableBooks.Count == 0)
         {
             // no available books left
-            OrderBookPicker.ItemsSource = new List<string> { "Geen beschikbare boeken" };
+            OrderBookPicker.ItemsSource = new List<Book>();
             OrderBookPicker.SelectedItem = null;
             OrderActionButton.IsEnabled = false;
             return;
         }
 
-        OrderBookPicker.ItemsSource = availableBooks.Select(b => $"{b.Id}: {b.Title}").ToList();
+        OrderBookPicker.ItemsSource = availableBooks;
 
-        var bookItem = OrderBookPicker.SelectedItem as string;
-        var parsedBook = ParsePickerItem(bookItem);
-        OrderActionButton.IsEnabled = (parsedBook != null);
+        var selectedBook = OrderBookPicker.SelectedItem as Book;
+        OrderActionButton.IsEnabled = (selectedBook != null);
     }
 
     // Book add UI removed; books are displayed read-only to match Demo.App layout
 
     private async void OnCreateOrderClicked(object sender, EventArgs e)
     {
-        var custItem = OrderCustomerPicker.SelectedItem as string;
-        var bookItem = OrderBookPicker.SelectedItem as string;
-        var parsedCust = ParsePickerItem(custItem);
-        var parsedBook = ParsePickerItem(bookItem);
-        if (parsedCust == null)
+        var customer = OrderCustomerPicker.SelectedItem as Customer;
+        var book = OrderBookPicker.SelectedItem as Book;
+        if (customer == null)
         {
             await DisplayAlert("Fout", "Selecteer eerst een klant.", "OK");
             return;
         }
-        if (parsedBook == null)
+        if (book == null)
         {
             await DisplayAlert("Fout", "Selecteer eerst een boek.", "OK");
             return;
         }
-        var customer = _customers.FirstOrDefault(c => c.Id == parsedCust.Value.id);
-        var book = _books.FirstOrDefault(b => b.Id == parsedBook.Value.id);
         if (customer == null || book == null)
         {
             DisplayAlert("Fout", "Geselecteerde items niet gevonden.", "OK");
