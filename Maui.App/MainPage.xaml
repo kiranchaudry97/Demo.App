@@ -34,11 +34,7 @@
                         </CollectionView.ItemTemplate>
                     </CollectionView>
 
-                    <StackLayout Orientation="Horizontal" Spacing="8">
-                        <Entry x:Name="CustomerNameEntry" Placeholder="Naam" HorizontalOptions="FillAndExpand" />
-                        <Entry x:Name="CustomerEmailEntry" Placeholder="Email" WidthRequest="180" />
-                    </StackLayout>
-
+                    
                     <!-- Details pane similar to Demo.App: editable selected customer details -->
                     <Frame BorderColor="#f0f0f0" Padding="8">
                         <VerticalStackLayout Spacing="6">
