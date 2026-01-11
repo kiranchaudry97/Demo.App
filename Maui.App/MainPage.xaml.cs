@@ -144,8 +144,10 @@ public partial class MainPage : ContentPage
 
     private async void OnSaveCustomerClicked(object sender, EventArgs e)
     {
-        var name = CustomerNameEntry.Text?.Trim();
-        var email = CustomerEmailEntry.Text?.Trim();
+        var detailName = this.FindByName<Entry>("DetailCustomerNameEntry");
+        var detailEmail = this.FindByName<Entry>("DetailCustomerEmailEntry");
+        var name = detailName?.Text?.Trim();
+        var email = detailEmail?.Text?.Trim();
         if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(email))
         {
             DisplayAlert("Fout", "Voer een geldige naam en e-mail in.", "OK");
@@ -203,8 +205,8 @@ public partial class MainPage : ContentPage
         #endif
 
         // Clear inputs
-        CustomerNameEntry.Text = string.Empty;
-        CustomerEmailEntry.Text = string.Empty;
+        if (detailName != null) detailName.Text = string.Empty;
+        if (detailEmail != null) detailEmail.Text = string.Empty;
         CustomersView.SelectedItem = null;
 
         RefreshAllViews();
@@ -217,8 +219,10 @@ public partial class MainPage : ContentPage
             var customer = _customers.FirstOrDefault(c => c.Id == id);
             if (customer != null)
             {
-                CustomerNameEntry.Text = customer.Name;
-                CustomerEmailEntry.Text = customer.Email;
+                var detailName = this.FindByName<Entry>("DetailCustomerNameEntry");
+                var detailEmail = this.FindByName<Entry>("DetailCustomerEmailEntry");
+                if (detailName != null) detailName.Text = customer.Name;
+                if (detailEmail != null) detailEmail.Text = customer.Email;
                 CustomersView.SelectedItem = customer;
             }
         }
@@ -234,8 +238,7 @@ public partial class MainPage : ContentPage
             // populate detail entry fields
             if (detailName != null) detailName.Text = selected.Name;
             if (detailEmail != null) detailEmail.Text = selected.Email;
-            CustomerNameEntry.Text = selected.Name;
-            CustomerEmailEntry.Text = selected.Email;
+            // no separate overview labels; detail entries are editable
             // also select this customer in the order picker so seller can immediately choose a book
             try
             {
@@ -275,6 +278,7 @@ public partial class MainPage : ContentPage
         {
             if (detailName != null) detailName.Text = string.Empty;
             if (detailEmail != null) detailEmail.Text = string.Empty;
+            // clear detail entries
             // clear order pickers when no customer selected
             OrderCustomerPicker.SelectedItem = null;
             OrderBookPicker.SelectedItem = null;
@@ -388,8 +392,10 @@ public partial class MainPage : ContentPage
 
     private void OnNewCustomerClicked(object sender, EventArgs e)
     {
-        CustomerNameEntry.Text = string.Empty;
-        CustomerEmailEntry.Text = string.Empty;
+        var detailName = this.FindByName<Entry>("DetailCustomerNameEntry");
+        var detailEmail = this.FindByName<Entry>("DetailCustomerEmailEntry");
+        if (detailName != null) detailName.Text = string.Empty;
+        if (detailEmail != null) detailEmail.Text = string.Empty;
         CustomersView.SelectedItem = null;
     }
 

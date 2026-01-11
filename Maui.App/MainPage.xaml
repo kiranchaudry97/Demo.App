@@ -39,6 +39,7 @@
                     <Frame BorderColor="#f0f0f0" Padding="8">
                         <VerticalStackLayout Spacing="6">
                             <Label Text="Klant Details" FontAttributes="Bold" />
+                            <!-- Customer detail entries (editable) -->
                             <Label Text="Naam:" />
                             <Entry x:Name="DetailCustomerNameEntry" Placeholder="Naam" />
                             <Label Text="Email:" />
