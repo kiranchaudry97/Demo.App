@@ -240,15 +240,34 @@ public partial class MainPage : ContentPage
             }
         }
         #else
-        if (selected != null)
+        if (_api != null)
         {
-            selected.Name = name;
-            selected.Email = email;
+            if (selected != null)
+            {
+                selected.Name = name;
+                selected.Email = email;
+                await _api.UpdateCustomerAsync(selected);
+                await LoadFromApiAsync();
+            }
+            else
+            {
+                var create = new Customer { Name = name, Email = email };
+                await _api.CreateCustomerAsync(create);
+                await LoadFromApiAsync();
+            }
         }
         else
         {
-            var customer = new Customer { Id = _nextCustomerId++, Name = name, Email = email };
-            _customers.Add(customer);
+            if (selected != null)
+            {
+                selected.Name = name;
+                selected.Email = email;
+            }
+            else
+            {
+                var customer = new Customer { Id = _nextCustomerId++, Name = name, Email = email };
+                _customers.Add(customer);
+            }
         }
         #endif
 
@@ -340,16 +359,14 @@ public partial class MainPage : ContentPage
         var detailEmail = this.FindByName<Entry>("DetailCustomerEmailEntry");
         var name = detailName?.Text?.Trim();
         var email = detailEmail?.Text?.Trim();
-        if (selected == null || string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(email))
+
+        if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(email))
         {
-            // If no customer selected, allow creating a new one from details
-            if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(email))
-            {
-                await DisplayAlert("Fout", "Selecteer een klant of vul naam en e-mail in om op te slaan.", "OK");
-                return;
-            }
+            await DisplayAlert("Fout", "Vul naam en e-mail in om op te slaan.", "OK");
+            return;
         }
-        // If no customer selected -> create new
+
+        // Create new
         if (selected == null)
         {
 #if USE_EF
@@ -368,7 +385,17 @@ public partial class MainPage : ContentPage
                 return;
             }
 #endif
-            // in-memory create
+
+            if (_api != null)
+            {
+                var create = new Customer { Name = name!, Email = email! };
+                await _api.CreateCustomerAsync(create);
+                await LoadFromApiAsync();
+                RefreshAllViews();
+                CustomersView.SelectedItem = _customers.FirstOrDefault(c => c.Name == name && c.Email == email);
+                return;
+            }
+
             var createdMem = new Customer { Id = _nextCustomerId++, Name = name!, Email = email! };
             _customers.Add(createdMem);
             RefreshAllViews();
@@ -376,7 +403,7 @@ public partial class MainPage : ContentPage
             return;
         }
 
-        // update selected
+        // Update existing
         selected.Name = name ?? selected.Name;
         selected.Email = email ?? selected.Email;
 
@@ -395,6 +422,15 @@ public partial class MainPage : ContentPage
             }
         }
 #endif
+
+        if (_api != null)
+        {
+            await _api.UpdateCustomerAsync(selected);
+            await LoadFromApiAsync();
+            MainThread.BeginInvokeOnMainThread(RefreshAllViews);
+            return;
+        }
+
         // fallback in-memory
         RefreshAllViews();
     }
@@ -413,7 +449,6 @@ public partial class MainPage : ContentPage
         {
             var confirm = await DisplayAlert("Bevestig", "Weet je zeker dat je deze klant wilt verwijderen?", "Ja", "Nee");
             if (!confirm) return;
-
             #if USE_EF
             if (_db != null)
             {
@@ -428,6 +463,14 @@ public partial class MainPage : ContentPage
                 }
             }
             #endif
+
+            if (_api != null)
+            {
+                await _api.DeleteCustomerAsync(id);
+                await LoadFromApiAsync();
+                RefreshAllViews();
+                return;
+            }
 
             var cust = _customers.FirstOrDefault(c => c.Id == id);
             if (cust != null)
@@ -537,11 +580,20 @@ public partial class MainPage : ContentPage
             }
             #else
             var ord = _orders.FirstOrDefault(o => o.Id == existingOrderId);
-            if (ord != null)
+            if (_api != null)
             {
-                ord.CustomerId = customer.Id;
-                ord.BookIds = new List<int> { book.Id };
-                ord.OrderDate = DateTime.Now;
+                var update = new Order { CustomerId = customer.Id, BookIds = new List<int> { book.Id }, OrderDate = DateTime.Now };
+                await _api.UpdateOrderAsync(existingOrderId, update);
+                await LoadFromApiAsync();
+            }
+            else
+            {
+                if (ord != null)
+                {
+                    ord.CustomerId = customer.Id;
+                    ord.BookIds = new List<int> { book.Id };
+                    ord.OrderDate = DateTime.Now;
+                }
             }
             #endif
 
@@ -553,13 +605,13 @@ public partial class MainPage : ContentPage
         }
         else
         {
-            // Create new order
-            if (_api != null)
-            {
-                var newOrder = new Order { CustomerId = customer.Id, BookIds = new List<int> { book.Id }, OrderDate = DateTime.Now };
-                await _api.CreateOrderAsync(newOrder);
-                await LoadFromApiAsync();
-            }
+                // Create new order
+                if (_api != null)
+                {
+                    var newOrder = new Order { CustomerId = customer.Id, BookIds = new List<int> { book.Id }, OrderDate = DateTime.Now };
+                    await _api.CreateOrderAsync(newOrder);
+                    await LoadFromApiAsync();
+                }
             else
             {
                 #if USE_EF
@@ -624,6 +676,14 @@ public partial class MainPage : ContentPage
                 }
             }
             #endif
+
+            if (_api != null)
+            {
+                await _api.DeleteOrderAsync(id);
+                await LoadFromApiAsync();
+                RefreshAllViews();
+                return;
+            }
 
             var ord = _orders.FirstOrDefault(o => o.Id == id);
             if (ord != null)
