@@ -1,5 +1,8 @@
-﻿using Microsoft.Extensions.Logging;
+﻿#nullable enable
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Maui.Devices;
+using Maui.App.Services;
 #if USE_EF
 using Microsoft.EntityFrameworkCore;
 using Maui.App.Data;
@@ -25,10 +28,28 @@ namespace Maui.App
             builder.Configuration.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
 
             builder.Services.AddTransient<Services.ApiKeyHandler>();
+
+            // Resolve base URL from configuration and adapt for emulator/dev environment
+            var configuredBase = builder.Configuration["Api:BaseUrl"] ?? "https://localhost:7187/";
+            // If running on Android emulator, replace localhost with 10.0.2.2 and prefer http for dev
+            if (DeviceInfo.Platform == DevicePlatform.Android)
+            {
+                try
+                {
+                    var u = new Uri(configuredBase);
+                    var host = u.Host == "localhost" ? "10.0.2.2" : u.Host;
+                    var scheme = u.Scheme == "https" ? "http" : u.Scheme;
+                    configuredBase = new UriBuilder(scheme, host, u.Port, u.PathAndQuery).Uri.ToString();
+                }
+                catch
+                {
+                    // ignore and use configured value if parsing fails
+                }
+            }
+
             builder.Services.AddHttpClient<Services.ApiClient>(client =>
             {
-                var baseUrl = builder.Configuration["Api:BaseUrl"] ?? "https://localhost:7187/";
-                client.BaseAddress = new Uri(baseUrl);
+                client.BaseAddress = new Uri(configuredBase);
             })
             .AddHttpMessageHandler<Services.ApiKeyHandler>();
 
