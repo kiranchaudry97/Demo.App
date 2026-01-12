@@ -1,0 +1,159 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Maui.App.MainPage">
+
+    <ScrollView x:Name="MainScroll">
+        <VerticalStackLayout
+            Padding="20"
+            Spacing="16">
+
+            <Label Text="Beheer" FontAttributes="Bold" FontSize="24" HorizontalOptions="Center" />
+
+            <Frame x:Name="OrdersFrame" BorderColor="#ddd" Padding="10">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Klanten" FontAttributes="Bold" />
+                    <CollectionView x:Name="CustomersView" SelectionMode="Single" HeightRequest="150" SelectionChanged="OnCustomerSelected">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Padding="8" ColumnSpacing="12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="2*" />
+                                        <ColumnDefinition Width="3*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Label Text="{Binding Name}" Grid.Column="0" VerticalOptions="Center" />
+                                    <Label Text="{Binding Email}" Grid.Column="1" VerticalOptions="Center" TextColor="Gray" />
+                                    <StackLayout Orientation="Horizontal" Grid.Column="2" Spacing="6" VerticalOptions="Center">
+                                        <Button Text="Bewerk" Clicked="OnEditCustomerClicked" CommandParameter="{Binding Id}" FontSize="Small" />
+                                        <Button Text="Verwijder" Clicked="OnDeleteCustomerClicked" CommandParameter="{Binding Id}" BackgroundColor="#dc3545" TextColor="White" FontSize="Small" />
+                                    </StackLayout>
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+
+                    
+                    <!-- Details pane similar to Demo.App: editable selected customer details -->
+                    <Frame BorderColor="#f0f0f0" Padding="8">
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="Klant Details" FontAttributes="Bold" />
+                            <!-- Customer detail entries (editable) -->
+                            <Label Text="Naam:" />
+                            <Entry x:Name="DetailCustomerNameEntry" Placeholder="Naam" />
+                            <Label Text="Email:" />
+                            <Entry x:Name="DetailCustomerEmailEntry" Placeholder="Email" Keyboard="Email" />
+                            <HorizontalStackLayout Spacing="8">
+                                <Button Text="Opslaan" Clicked="OnSaveDetailsClicked" />
+                                <Button Text="Nieuwe klant" Clicked="OnSaveDetailsClicked" />
+                                <Button Text="Wis" Clicked="OnClearDetailsClicked" />
+                            </HorizontalStackLayout>
+                        </VerticalStackLayout>
+                    </Frame>
+                </VerticalStackLayout>
+            </Frame>
+
+            <Frame BorderColor="#ddd" Padding="10">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Boeken" FontAttributes="Bold" />
+                    <CollectionView x:Name="BooksView" SelectionMode="Single" HeightRequest="150">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Padding="6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="2*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Label Text="{Binding Title}" Grid.Column="0" />
+                                    <Label Text="{Binding Author}" Grid.Column="1" />
+                                    <Label Text="{Binding Price, StringFormat='€{0:N2}'}" Grid.Column="2" HorizontalOptions="End" />
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+
+                    <!-- Add controls removed to match Demo.App layout: only show books and price -->
+                </VerticalStackLayout>
+            </Frame>
+
+            <Frame BorderColor="#ddd" Padding="10">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Bestellingen" FontAttributes="Bold" />
+            <StackLayout Orientation="Vertical" Spacing="8">
+                        <CollectionView x:Name="OrdersView" HeightRequest="240" Margin="0,4">
+                            <CollectionView.Header>
+                            <Grid Padding="6" ColumnSpacing="8">
+                                <!-- use star sizing and smaller numbers for better small-screen layout -->
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="60" />
+                                    <ColumnDefinition Width="1*" />
+                                    <ColumnDefinition Width="2*" />
+                                    <ColumnDefinition Width="120" />
+                                    <ColumnDefinition Width="80" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Label Text="Bestelling ID" FontAttributes="Bold" Grid.Column="0" FontSize="12" LineBreakMode="NoWrap" />
+                                <Label Text="Klant" FontAttributes="Bold" Grid.Column="1" FontSize="12" LineBreakMode="NoWrap" />
+                                <Label Text="Boek(en)" FontAttributes="Bold" Grid.Column="2" FontSize="12" LineBreakMode="NoWrap" />
+                                <Label Text="Datum" FontAttributes="Bold" Grid.Column="3" FontSize="12" LineBreakMode="NoWrap" />
+                                <Label Text="Totaal" FontAttributes="Bold" Grid.Column="4" FontSize="12" HorizontalTextAlignment="End" LineBreakMode="NoWrap" />
+                                <Label Text="Acties" FontAttributes="Bold" Grid.Column="5" FontSize="12" HorizontalTextAlignment="Center" LineBreakMode="NoWrap" />
+                            </Grid>
+                            </CollectionView.Header>
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="6" ColumnSpacing="8" RowSpacing="4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="80" />
+                                            <ColumnDefinition Width="2*" />
+                                            <ColumnDefinition Width="3*" />
+                                            <ColumnDefinition Width="200" />
+                                            <ColumnDefinition Width="100" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <Label Text="{Binding Id}" Grid.Column="0" VerticalOptions="Center" />
+                                        <Label Text="{Binding CustomerName}" Grid.Column="1" VerticalOptions="Center" />
+                                        <StackLayout Grid.Column="2" Padding="0" Spacing="0">
+                                            <Label Text="{Binding BooksWithPricesString}" LineBreakMode="WordWrap" />
+                                        </StackLayout>
+                                        <Label Text="{Binding OrderDate, StringFormat='{0:yyyy-MM-dd HH:mm:ss}'}" Grid.Column="3" VerticalOptions="Center" />
+                                        <Label Text="{Binding OrderTotal, StringFormat='€{0:N2}'}" Grid.Column="4" HorizontalTextAlignment="End" VerticalOptions="Center" FontAttributes="Bold" />
+                                        <StackLayout Grid.Column="5" VerticalOptions="Center" HorizontalOptions="Center">
+                                            <Button Text="Verwijderen" Clicked="OnDeleteOrderClicked" CommandParameter="{Binding Id}" BackgroundColor="#dc3545" TextColor="White" FontSize="Small" />
+                                        </StackLayout>
+                                    </Grid>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    <StackLayout Orientation="Vertical" Spacing="6">
+                        <Label Text="Kies eerst een klant, daarna een boek, en klik vervolgens op 'Bestel'" FontAttributes="Italic" FontSize="12" TextColor="Gray" />
+                        <Label Text="Klant" FontAttributes="Bold" />
+                        <Picker x:Name="OrderCustomerPicker" Title="Selecteer een klant" HorizontalOptions="FillAndExpand" SelectedIndexChanged="OnOrderPickerChanged" ItemDisplayBinding="{Binding Name}" />
+                        <Label Text="Boek" FontAttributes="Bold" />
+                        <Picker x:Name="OrderBookPicker" Title="Selecteer een boek" HorizontalOptions="FillAndExpand" SelectedIndexChanged="OnOrderPickerChanged" IsEnabled="False" ItemDisplayBinding="{Binding Title}">
+                            <Picker.Triggers>
+                                <DataTrigger TargetType="Picker" Binding="{Binding IsEnabled, Source={x:Reference OrderBookPicker}}" Value="False">
+                                    <Setter Property="Opacity" Value="0.5" />
+                                </DataTrigger>
+                            </Picker.Triggers>
+                        </Picker>
+                        <Button x:Name="OrderActionButton" Text="Bestel" Clicked="OnCreateOrderClicked" IsEnabled="False" HorizontalOptions="Start">
+                            <Button.Triggers>
+                                <DataTrigger TargetType="Button" Binding="{Binding IsEnabled, Source={x:Reference OrderActionButton}}" Value="False">
+                                    <Setter Property="Opacity" Value="0.5" />
+                                </DataTrigger>
+                            </Button.Triggers>
+                        </Button>
+                        <Button Text="Annuleer" Clicked="OnCancelOrderEditClicked" BackgroundColor="#5b2bd4" TextColor="White" HorizontalOptions="Start" />
+                    </StackLayout>
+                    </StackLayout>
+                </VerticalStackLayout>
+            </Frame>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="Demo.App/Demo.App.csproj" />
+  <Project Path="Maui.App/Maui.App.csproj" Id="4aa1b3ad-bf54-4266-b9f6-cdec6ea9fbf2" />
 </Solution>
