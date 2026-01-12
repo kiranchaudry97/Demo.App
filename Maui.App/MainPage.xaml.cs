@@ -53,10 +53,21 @@ public partial class MainPage : ContentPage
             _db = null;
         }
 
+#endif
+    }
+
+    private bool _isLoaded;
+
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+        if (_isLoaded) return;
+        _isLoaded = true;
+
+#if USE_EF
         if (_db != null)
         {
-            // load synchronously on startup by awaiting the async loader
-            LoadFromDatabaseAsync().GetAwaiter().GetResult();
+            await LoadFromDatabaseAsync();
         }
         else
         {
@@ -66,7 +77,7 @@ public partial class MainPage : ContentPage
         // if ApiClient available, load from backend
         if (_api != null)
         {
-            LoadFromApiAsync().GetAwaiter().GetResult();
+            await LoadFromApiAsync();
         }
         else
         {

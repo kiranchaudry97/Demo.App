@@ -13,63 +13,80 @@ public sealed class RabbitMqService : IDisposable
     private IConnection? _connection;
 
     private IModel? _channel;
+    
+    private readonly object _lock = new();
 
     public RabbitMqService()
-
     {
+    }
 
-        var factory = new ConnectionFactory
+    private void Initialize()
+    {
+        if (_channel != null) return;
 
+        lock (_lock)
         {
+            if (_channel != null) return;
 
-            HostName = "10.2.160.223", // VM of emulator IP
+            try
+            {
+                var hostName = "10.2.160.223";
 
-            Port = 5672,
+                if (Microsoft.Maui.Devices.DeviceInfo.Platform == Microsoft.Maui.Devices.DevicePlatform.Android)
+                {
+                     hostName = "10.0.2.2";
+                }
 
-            UserName = "guest",
+                var factory = new ConnectionFactory
+                {
+                    HostName = hostName, // VM of emulator IP
+                    Port = 5672,
+                    UserName = "guest",
+                    Password = "guest",
+                    AutomaticRecoveryEnabled = true
+                };
 
-            Password = "guest",
-
-            AutomaticRecoveryEnabled = true
-
-        };
-
-        _connection = factory.CreateConnection();
-
-        _channel = _connection.CreateModel();
-
-        _channel.QueueDeclare(
-
-            queue: "maui.queue",
-
-            durable: false,
-
-            exclusive: false,
-
-            autoDelete: false,
-
-            arguments: null);
-
+                _connection = factory.CreateConnection();
+                _channel = _connection.CreateModel();
+                _channel.QueueDeclare(
+                    queue: "maui.queue",
+                    durable: false,
+                    exclusive: false,
+                    autoDelete: false,
+                    arguments: null);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"RabbitMqService init failed: {ex}");
+                _channel = null;
+                _connection = null;
+            }
+        }
     }
 
     public void Send(string message)
-
     {
+        try
+        {
+            Initialize();
 
-        if (_channel == null) throw new InvalidOperationException("Channel is null");
+            if (_channel == null)
+            {
+                System.Diagnostics.Debug.WriteLine("RabbitMqService: channel is null, message not sent.");
+                return;
+            }
 
-        var body = Encoding.UTF8.GetBytes(message);
-
-        _channel.BasicPublish(
-
-            exchange: "",
-
-            routingKey: "maui.queue",
-
-            basicProperties: null,
-
-            body: body);
-
+            var body = Encoding.UTF8.GetBytes(message);
+            _channel.BasicPublish(
+                exchange: "",
+                routingKey: "maui.queue",
+                basicProperties: null,
+                body: body);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"RabbitMqService send failed: {ex}");
+        }
     }
 
     public void Dispose()

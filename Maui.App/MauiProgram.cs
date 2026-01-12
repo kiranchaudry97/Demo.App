@@ -28,6 +28,7 @@ namespace Maui.App
             builder.Configuration.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
 
             builder.Services.AddTransient<Services.ApiKeyHandler>();
+            builder.Services.AddSingleton<Services.RabbitMqService>();
 
             // Resolve base URL from configuration and adapt for emulator/dev environment
             var configuredBase = builder.Configuration["Api:BaseUrl"] ?? "https://localhost:7187/";
